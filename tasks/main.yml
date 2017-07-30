@@ -1,0 +1,48 @@
+---
+- name: Create Compose Foldder
+  file:
+    name: "{{ DOCKER_COMPOSE_WORKDIR }}"
+    state: directory
+
+- name: Copy context
+  copy:
+    src: "{{ DOCKER_COMPOSE_FILE }}"
+    dest: "{{ DOCKER_COMPOSE_WORKDIR }}/docker-compose.yml"
+  when: not docker_compose_template_compose_file
+
+- name: Copy context
+  template:
+    src: "{{ DOCKER_COMPOSE_FILE }}"
+    dest: "{{ DOCKER_COMPOSE_WORKDIR }}/docker-compose.yml"
+  when: docker_compose_template_compose_file
+
+- name: Create env file
+  template:
+    src: vars.env
+    dest: "{{ DOCKER_COMPOSE_WORKDIR }}/.env"
+- name: Log into
+  docker_login:
+    username: "{{ DOCKER_LOGIN_USERNAME }}"
+    password: "{{ DOCKER_LOGIN_PASSWORD }}"
+    registry_url: "{{ DOCKER_LOGIN_SERVICE }}"
+  when: DOCKER_LOGIN_SERVICE
+
+- name: Pull images
+  command: docker-compose pull
+  args:
+    chdir: "{{ DOCKER_COMPOSE_WORKDIR }}"
+
+- name: Logout from docker
+  command: docker logout "{{ DOCKER_LOGIN_SERVICE }}"
+  when: DOCKER_LOGIN_SERVICE
+
+- name: Copy systemd files
+  template:
+    src: service.unit
+    dest: /etc/systemd/system/{{docker_compose_app_name}}.service
+
+- name: Reload
+  command: systemctl daemon-reload
+
+- name: enable services
+  service: name={{docker_compose_app_name}}.service enabled=yes state=restarted

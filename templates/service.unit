@@ -1,0 +1,17 @@
+[Unit]
+Description={{docker_compose_app_name}}
+After=syslog.target
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Restart=always
+ExecStart=/usr/local/bin/docker-compose up
+ExecStop=/usr/local/bin/docker-compose down
+WorkingDirectory={{docker_compose_workdir}}
+Restart=always
+Type=simple
+
+StandardError=syslog
+NotifyAccess=all
