@@ -1,20 +1,18 @@
 ---
+- name: Prune unused images
+  command: docker image prune -af
+  become: true
+
 - name: Create Compose Foldder
   file:
     name: "{{ DOCKER_COMPOSE_WORKDIR }}"
     state: directory
 
 - name: Copy context
-  copy:
-    src: "{{ DOCKER_COMPOSE_FILE }}"
-    dest: "{{ DOCKER_COMPOSE_WORKDIR }}/docker-compose.yml"
-  when: not docker_compose_template_compose_file
-
-- name: Copy context
   template:
     src: "{{ DOCKER_COMPOSE_FILE }}"
     dest: "{{ DOCKER_COMPOSE_WORKDIR }}/docker-compose.yml"
-  when: docker_compose_template_compose_file
+  when: DOCKER_COMPOSE_FILE is defined
 
 - name: Create env file
   template:
@@ -39,10 +37,10 @@
 - name: Copy systemd files
   template:
     src: service.unit
-    dest: /etc/systemd/system/{{docker_compose_app_name}}.service
+    dest: /etc/systemd/system/{{ DOCKER_COMPOSE_APP_NAME }}.service
 
 - name: Reload
   command: systemctl daemon-reload
 
 - name: enable services
-  service: name={{docker_compose_app_name}}.service enabled=yes state=restarted
+  service: name={{ DOCKER_COMPOSE_APP_NAME }}.service enabled=yes state=restarted

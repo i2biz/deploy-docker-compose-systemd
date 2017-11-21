@@ -1,5 +1,5 @@
 [Unit]
-Description={{docker_compose_app_name}}
+Description={{ DOCKER_COMPOSE_APP_NAME }}
 After=syslog.target
 
 [Install]
@@ -9,7 +9,7 @@ WantedBy=multi-user.target
 Restart=always
 ExecStart=/usr/local/bin/docker-compose up
 ExecStop=/usr/local/bin/docker-compose down
-WorkingDirectory={{docker_compose_workdir}}
+WorkingDirectory={{ DOCKER_COMPOSE_WORKDIR }}
 Restart=always
 Type=simple
 
