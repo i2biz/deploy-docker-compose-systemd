@@ -1,4 +1,9 @@
 ---
+
+- name: Install docker py
+  apt: name=python-docker state=present
+  when: DOCKER_LOGIN_SERVICE is defined
+
 - name: Prune unused images
   command: docker image prune -af
   become: true
@@ -23,7 +28,7 @@
     username: "{{ DOCKER_LOGIN_USERNAME }}"
     password: "{{ DOCKER_LOGIN_PASSWORD }}"
     registry_url: "{{ DOCKER_LOGIN_SERVICE }}"
-  when: DOCKER_LOGIN_SERVICE
+  when: DOCKER_LOGIN_SERVICE is defined
 
 - name: Pull images
   command: docker-compose pull
@@ -32,7 +37,7 @@
 
 - name: Logout from docker
   command: docker logout "{{ DOCKER_LOGIN_SERVICE }}"
-  when: DOCKER_LOGIN_SERVICE
+  when: DOCKER_LOGIN_SERVICE is defined
 
 - name: Copy systemd files
   template:
