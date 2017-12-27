@@ -12,6 +12,7 @@ ExecStop=/usr/local/bin/docker-compose down
 WorkingDirectory={{ DOCKER_COMPOSE_WORKDIR }}
 Restart=always
 Type=simple
-
+StandardOutput={{ DOCKER_COMPOSE_STANDARD_OUTPUT }}
+StandardError={{ DOCKER_COMPOSE_STANDARD_ERROR }}
 StandardError=syslog
 NotifyAccess=all
