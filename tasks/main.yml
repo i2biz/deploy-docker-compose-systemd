@@ -4,6 +4,16 @@
   apt: name=python-docker state=present
   when: DOCKER_LOGIN_SERVICE is defined
 
+- name: Install docker compose apt deps
+  apt: name={{ item }} state=present cache_valid_time=3600
+  with_items: "{{ DOCKER_COMPOSE_DOCKER_COMPOSE_APT_PACKAGES }}"
+  when: DOCKER_COMPOSE_INSTALL_DOCKER_COMPOSE
+
+- name: Install docker compose pip deps
+  pip: name={{ item }}
+  with_items: "{{ DOCKER_COMPOSE_DOCKER_COMPOSE_PIP_PACKAGES }}"
+  when: DOCKER_COMPOSE_INSTALL_DOCKER_COMPOSE
+
 - name: Prune unused images
   command: docker image prune -af
   become: true
@@ -22,30 +32,50 @@
 - name: Create env file
   template:
     src: vars.env
-    dest: "{{ DOCKER_COMPOSE_WORKDIR }}/.env"
+    dest: "{{ DOCKER_COMPOSE_WORKDIR }}/{{ item.key }}"
+  with_dict: "{{ DOCKER_COMPOSE_VARS }}"
+
 - name: Log into
   docker_login:
     username: "{{ DOCKER_LOGIN_USERNAME }}"
     password: "{{ DOCKER_LOGIN_PASSWORD }}"
     registry_url: "{{ DOCKER_LOGIN_SERVICE }}"
   when: DOCKER_LOGIN_SERVICE is defined
+  changed_when: false
 
-- name: Pull images
-  command: docker-compose pull
-  args:
-    chdir: "{{ DOCKER_COMPOSE_WORKDIR }}"
+- name: start service
+  docker_service:
+    project_src: "{{ DOCKER_COMPOSE_WORKDIR }}"
+    pull: yes
+    recreate: smart
+    state: present
+  register: service_status
 
 - name: Logout from docker
   command: docker logout "{{ DOCKER_LOGIN_SERVICE }}"
   when: DOCKER_LOGIN_SERVICE is defined
+  changed_when: false
 
 - name: Copy systemd files
   template:
     src: service.unit
     dest: /etc/systemd/system/{{ DOCKER_COMPOSE_APP_NAME }}.service
+  register: systemd_service
 
 - name: Reload
   command: systemctl daemon-reload
+  when: systemd_service.changed
+
+- name: restart services
+  service: name={{ DOCKER_COMPOSE_APP_NAME }}.service enabled=yes state=restarted
+  when: systemd_service.changed or service_status.changed
 
 - name: enable services
-  service: name={{ DOCKER_COMPOSE_APP_NAME }}.service enabled=yes state=restarted
+  service: name={{ DOCKER_COMPOSE_APP_NAME }}.service enabled=yes state=started
+  when: not (systemd_service.changed and service_status.changed)
+
+- name: wait for service
+  pause:
+    seconds: "{{ WAIT_FOR_SERVICE_TIMEOUT }}"
+  when: (systemd_service.changed or service_status.changed) and WAIT_FOR_SERVICE_TIMEOUT
+
