@@ -28,6 +28,7 @@
     src: "{{ DOCKER_COMPOSE_FILE }}"
     dest: "{{ DOCKER_COMPOSE_WORKDIR }}/docker-compose.yml"
   when: DOCKER_COMPOSE_FILE is defined
+  no_log: true
 
 - name: Create env file
   template:
