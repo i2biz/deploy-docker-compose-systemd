@@ -35,6 +35,7 @@
     src: vars.env
     dest: "{{ DOCKER_COMPOSE_WORKDIR }}/{{ item.key }}"
   with_dict: "{{ DOCKER_COMPOSE_VARS }}"
+  no_log: true
 
 - name: Log into
   docker_login:
