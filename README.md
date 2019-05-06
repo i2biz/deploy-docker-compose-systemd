@@ -6,7 +6,7 @@ Simple role that installs docker-compose service as a systemd service.
 Requirements
 ------------
 
-System with locally installed docker-compose, docekr and systemd. 
+System with locally installed docker-compose, docker, docker-python, and systemd. 
 
 Role Variables
 --------------

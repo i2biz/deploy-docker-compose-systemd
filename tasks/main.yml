@@ -1,28 +1,5 @@
 ---
 
-- name: Install docker py
-  apt: name=python-docker state=present
-  when: DOCKER_LOGIN_SERVICE is defined
-
-- name: Install docker compose apt deps
-  apt: name={{ item }} state=present cache_valid_time=3600
-  with_items: "{{ DOCKER_COMPOSE_DOCKER_COMPOSE_APT_PACKAGES }}"
-  when: DOCKER_COMPOSE_INSTALL_DOCKER_COMPOSE
-
-- name: Install docker compose pip deps
-  pip: name={{ item }}
-  with_items: "{{ DOCKER_COMPOSE_DOCKER_COMPOSE_PIP_PACKAGES }}"
-  when: DOCKER_COMPOSE_INSTALL_DOCKER_COMPOSE
-
-- name: Prune unused images
-  command: docker image prune -af
-  become: true
-
-- name: Create Compose Foldder
-  file:
-    name: "{{ DOCKER_COMPOSE_WORKDIR }}"
-    state: directory
-
 - name: Copy context
   template:
     src: "{{ DOCKER_COMPOSE_FILE }}"
